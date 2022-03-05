@@ -13,10 +13,10 @@ TagManager:
   - UI
   - Ground
   - Climbing
-  - 
-  - 
-  - 
-  - 
+  - Player
+  - Background
+  - Bouncing
+  - Enemies
   - 
   - 
   - 
@@ -49,6 +49,9 @@ TagManager:
     locked: 0
   - name: Platforms
     uniqueID: 3335407673
+    locked: 0
+  - name: Enemies
+    uniqueID: 1974272623
     locked: 0
   - name: Player
     uniqueID: 869999393
