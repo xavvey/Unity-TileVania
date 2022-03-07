@@ -182,7 +182,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 869999393
-  m_SortingLayer: 6
+  m_SortingLayer: 7
   m_SortingOrder: 0
   m_Sprite: {fileID: 1857188551261513057, guid: 439ed9b02dd7a9d45a89c43e3a5748b0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -278,7 +278,9 @@ MonoBehaviour:
   verticalSpeed: 5
   jumpSpeed: 12
   climbingHorizontalSpeed: 3
-  playerHealth: 10
+  playerHealth: 2
+  hitFlashTime: 0.3
   hitFling: {x: 5, y: 10}
-  projectile: {fileID: 8683574952173882961, guid: 12dc3aeb5db8cf0459a2ad91bdcf217d, type: 3}
+  projectile: {fileID: 9041305350356645335, guid: 12dc3aeb5db8cf0459a2ad91bdcf217d, type: 3}
   projectileSpawner: {fileID: 6465030849821832402}
+  shootDelay: 0.5

@@ -4,23 +4,36 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    [SerializeField] float projectileVelocity = 10f;
-    [SerializeField] float projectileDropOff = -0.1f;
+    [SerializeField] float projectileVelocity = 20f;
     Rigidbody2D rbProjectile;
     PlayerMovement player;
-    float xSpeed;
+    float ProjectileVectorX;
 
     void Start()
     {
         player = FindObjectOfType<PlayerMovement>();
         rbProjectile = GetComponent<Rigidbody2D>(); 
 
-        xSpeed = player.transform.localScale.x * projectileVelocity;  
-        Debug.Log(xSpeed); 
+        ProjectileVectorX = player.transform.localScale.x * projectileVelocity;  
     }
 
     void Update()
     {
-        
+        rbProjectile.velocity = new Vector2(ProjectileVectorX, 0f);
+    }
+
+    void OnTriggerEnter2D(Collider2D other) 
+    {
+        if (other.tag == "Enemy")
+        {
+            Destroy(other.gameObject);
+        }
+
+        Destroy(gameObject);
+    }
+
+    private void OnCollisionEnter2D(Collision2D other) 
+    {
+        Destroy(gameObject);
     }
 }

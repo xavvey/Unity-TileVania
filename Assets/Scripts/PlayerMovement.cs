@@ -5,15 +5,19 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Player tuning")]
+    [Header("Player Movement")]
     [SerializeField] float horizontalSpeed = 7.5f;
     [SerializeField] float verticalSpeed = 5f;
     [SerializeField] float jumpSpeed = 12f;
     [SerializeField] float climbingHorizontalSpeed = 2f;
+    [Header("Player Life")]
     [SerializeField] int playerHealth = 2;
+    [SerializeField] float hitFlashTime = 0.3f;
     [SerializeField] Vector2 hitFling = new Vector2(5f, 10f);
+    [Header("Player Weapon")]
     [SerializeField] GameObject projectile;
     [SerializeField] Transform projectileSpawner;
+    [SerializeField] float shootDelay = 0.5f;
 
     Vector2 moveInput;
     Rigidbody2D rbPlayer;
@@ -27,6 +31,7 @@ public class PlayerMovement : MonoBehaviour
     bool playerHasVerticalSpeed = false;
     bool isAttachedToClimbing = false;
     bool isAlive = true;
+    bool canShoot = true;
     int currentHealth;
     float defaultPlayerGravity;
     float defaultHorizontalSpeed;
@@ -57,9 +62,14 @@ public class PlayerMovement : MonoBehaviour
 
         Run();
         Climb();
-        ProcessDangersHit();
+        ProcessHit();
     }
 
+    void FixedUpdate() 
+    {
+        
+    }
+    
     void OnMove(InputValue value)
     {
         if (!isAlive) { return; } 
@@ -79,19 +89,28 @@ public class PlayerMovement : MonoBehaviour
     void OnFire(InputValue value)
     {
         if (!isAlive) { return; } 
+        if (!canShoot) { return; } 
 
         if (value.isPressed)
         {
+            SpriteRenderer projectileSpriteRenderer = projectile.GetComponent<SpriteRenderer>();
+            projectileSpriteRenderer.flipX = rbPlayer.transform.localScale.x < Mathf.Epsilon ? true : false;
+
             Instantiate(projectile, projectileSpawner.position, transform.rotation);
-            playerAnimator.SetTrigger("isFiring");
+            playerAnimator.SetTrigger("Shoot");
+            canShoot = false;
+            StartCoroutine(ShootDelay());
         }
         else 
         {
-            playerAnimator.ResetTrigger("isFiring");
-        }
+            playerAnimator.ResetTrigger("Shoot");
+        }   
+    }
 
-
-        
+    IEnumerator ShootDelay()
+    {
+        yield return new WaitForSeconds(shootDelay);
+        canShoot = true;
     }
 
     void Run()
@@ -113,7 +132,9 @@ public class PlayerMovement : MonoBehaviour
     }
 
     void Climb()
-    {        
+    {
+        if (!isAlive) { return; } 
+
         if (!playerFeetBoxCollider.IsTouchingLayers(LayerMask.GetMask("Climbing")))
         {
             ResetClimbingState(); 
@@ -164,7 +185,7 @@ public class PlayerMovement : MonoBehaviour
             if (isAlive && currentHealth > 0)
             {
                 playerSpriteRenderer.color = Color.red;
-                Invoke("RestorePlayerSpriteColor", 0.3f);
+                StartCoroutine(RestorePlayerSpriteColor());
             }
             else
             {
@@ -173,28 +194,7 @@ public class PlayerMovement : MonoBehaviour
         }  
     }
 
-    // void OnHit()
-    // {        
-    //     Vector2 hitVelocity = new Vector2(-(transform.localScale.x) * 20f, 10f);
-    //     if (playerCapsuleCollider.IsTouchingLayers(LayerMask.GetMask("Enemies")) && currentHealth > 0)
-    //     {
-    //         rbPlayer.velocity = hitVelocity;           
-    //         playerSpriteRenderer.material.color = Color.red;
-    //         currentHealth--;
-    //     }
-    //     else if (currentHealth == 0)
-    //     {
-    //         Die();
-    //     }
-        
-    //     Invoke("RestorePlayerSpriteColor", 0.1f); // TODO: Invoke not working for restoring sprite color!
-    // }
-
-    // void SubtractPlayerHealth()
-    // {
-    //     currentHealth--;
-    // }
-    void ProcessDangersHit()
+    void ProcessHit()
     {
         if (rbPlayer.IsTouchingLayers(LayerMask.GetMask("Hazards")))
         {
@@ -215,8 +215,9 @@ public class PlayerMovement : MonoBehaviour
         playerSpriteRenderer.color = Color.red;
     }
 
-    void RestorePlayerSpriteColor()
+    IEnumerator RestorePlayerSpriteColor()
     {
-        playerSpriteRenderer.color = defaultPlayerSpriteColor;
+       yield return new WaitForSeconds(hitFlashTime);
+       playerSpriteRenderer.color = defaultPlayerSpriteColor;
     }
 }
