@@ -11,6 +11,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float jumpSpeed = 12f;
     [SerializeField] float climbingHorizontalSpeed = 2f;
     [SerializeField] int playerHealth = 2;
+    [SerializeField] Vector2 hitFling = new Vector2(5f, 10f);
+    [SerializeField] GameObject projectile;
+    [SerializeField] Transform projectileSpawner;
 
     Vector2 moveInput;
     Rigidbody2D rbPlayer;
@@ -18,7 +21,7 @@ public class PlayerMovement : MonoBehaviour
     CapsuleCollider2D playerCapsuleCollider;
     BoxCollider2D playerFeetBoxCollider;
     SpriteRenderer playerSpriteRenderer;
-    Color defaultPlayerSpriteColor = new Color(255f, 255f, 255f, 255f);
+    Color defaultPlayerSpriteColor;
 
     bool playerHasHorizontalSpeed = false;
     bool playerHasVerticalSpeed = false;
@@ -35,8 +38,8 @@ public class PlayerMovement : MonoBehaviour
         playerAnimator = GetComponent<Animator>();
         rbPlayer = GetComponent<Rigidbody2D>();
         playerCapsuleCollider = GetComponent<CapsuleCollider2D>();
-        playerFeetBoxCollider = GetComponent<BoxCollider2D>();
         playerSpriteRenderer = GetComponent<SpriteRenderer>();
+        playerFeetBoxCollider = GetComponentInChildren<BoxCollider2D>();
     }
 
     void Start() 
@@ -45,6 +48,7 @@ public class PlayerMovement : MonoBehaviour
         defaultHorizontalSpeed = horizontalSpeed;
         currentHealth = playerHealth;
         defaultClimbAnimMultiplier = playerAnimator.GetFloat("climbingAnimSpeed");
+        defaultPlayerSpriteColor = playerSpriteRenderer.color;
     }
     
     void Update()
@@ -53,7 +57,7 @@ public class PlayerMovement : MonoBehaviour
 
         Run();
         Climb();
-        OnHit();
+        ProcessDangersHit();
     }
 
     void OnMove(InputValue value)
@@ -70,6 +74,24 @@ public class PlayerMovement : MonoBehaviour
         {
             rbPlayer.velocity += new Vector2(0f, jumpSpeed);
         }
+    }
+
+    void OnFire(InputValue value)
+    {
+        if (!isAlive) { return; } 
+
+        if (value.isPressed)
+        {
+            Instantiate(projectile, projectileSpawner.position, transform.rotation);
+            playerAnimator.SetTrigger("isFiring");
+        }
+        else 
+        {
+            playerAnimator.ResetTrigger("isFiring");
+        }
+
+
+        
     }
 
     void Run()
@@ -132,32 +154,69 @@ public class PlayerMovement : MonoBehaviour
         playerAnimator.SetFloat("climbingAnimSpeed", defaultClimbAnimMultiplier);
     }
 
-    void OnHit()
-    {        
-        Vector2 hitVelocity = new Vector2(-(transform.localScale.x) * 20f, 10f);
-        if (playerCapsuleCollider.IsTouchingLayers(LayerMask.GetMask("Enemies")) && currentHealth > 0)
+    void OnCollisionEnter2D(Collision2D other) 
+    {
+        if (other.gameObject.tag == "Enemy")
         {
-            rbPlayer.velocity = hitVelocity;           
-            playerSpriteRenderer.material.color = Color.red;
-            Invoke("SubtractPlayerHealth", 0.1f);
-        }
-        else if (currentHealth == 0)
-        {
-            isAlive = false;
-            playerAnimator.SetTrigger("Dying");
-        }
-        
-        Invoke("RestorePlayerSpriteColor", 0.1f); // TODO: Invoke not working for restoring sprite color!
+           rbPlayer.velocity = hitFling;
+            --currentHealth;
+
+            if (isAlive && currentHealth > 0)
+            {
+                playerSpriteRenderer.color = Color.red;
+                Invoke("RestorePlayerSpriteColor", 0.3f);
+            }
+            else
+            {
+                Die();
+            }
+        }  
     }
 
-    void SubtractPlayerHealth()
+    // void OnHit()
+    // {        
+    //     Vector2 hitVelocity = new Vector2(-(transform.localScale.x) * 20f, 10f);
+    //     if (playerCapsuleCollider.IsTouchingLayers(LayerMask.GetMask("Enemies")) && currentHealth > 0)
+    //     {
+    //         rbPlayer.velocity = hitVelocity;           
+    //         playerSpriteRenderer.material.color = Color.red;
+    //         currentHealth--;
+    //     }
+    //     else if (currentHealth == 0)
+    //     {
+    //         Die();
+    //     }
+        
+    //     Invoke("RestorePlayerSpriteColor", 0.1f); // TODO: Invoke not working for restoring sprite color!
+    // }
+
+    // void SubtractPlayerHealth()
+    // {
+    //     currentHealth--;
+    // }
+    void ProcessDangersHit()
     {
-        currentHealth--;
+        if (rbPlayer.IsTouchingLayers(LayerMask.GetMask("Hazards")))
+        {
+            rbPlayer.velocity = hitFling;
+            Die();
+        }
+        
+        if (rbPlayer.IsTouchingLayers(LayerMask.GetMask("Water")))
+        {
+            Die();
+        }
+    }
+
+    void Die() 
+    {
+        isAlive = false;
+        playerAnimator.SetTrigger("Dying");
+        playerSpriteRenderer.color = Color.red;
     }
 
     void RestorePlayerSpriteColor()
     {
-        playerSpriteRenderer.color = new Color(255f, 255f, 255f, 255f);
-        Debug.Log(defaultPlayerSpriteColor);
+        playerSpriteRenderer.color = defaultPlayerSpriteColor;
     }
 }
