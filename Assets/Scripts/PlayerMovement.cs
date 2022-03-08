@@ -11,7 +11,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float jumpSpeed = 12f;
     [SerializeField] float climbingHorizontalSpeed = 2f;
     [Header("Player Life")]
-    [SerializeField] int playerHealth = 2;
+    // [SerializeField] int playerHealth = 2;
     [SerializeField] float hitFlashTime = 0.3f;
     [SerializeField] Vector2 hitFling = new Vector2(5f, 10f);
     [Header("Player Weapon")]
@@ -32,7 +32,7 @@ public class PlayerMovement : MonoBehaviour
     bool isAttachedToClimbing = false;
     bool isAlive = true;
     bool canShoot = true;
-    int currentHealth;
+    // int currentHealth;
     float defaultPlayerGravity;
     float defaultHorizontalSpeed;
     float defaultClimbAnimMultiplier;
@@ -51,7 +51,7 @@ public class PlayerMovement : MonoBehaviour
     {
         defaultPlayerGravity = rbPlayer.gravityScale; 
         defaultHorizontalSpeed = horizontalSpeed;
-        currentHealth = playerHealth;
+        // currentHealth = playerHealth;
         defaultClimbAnimMultiplier = playerAnimator.GetFloat("climbingAnimSpeed");
         defaultPlayerSpriteColor = playerSpriteRenderer.color;
     }
@@ -62,14 +62,9 @@ public class PlayerMovement : MonoBehaviour
 
         Run();
         Climb();
-        ProcessHit();
+        ProcessWorldHit();
     }
 
-    void FixedUpdate() 
-    {
-        
-    }
-    
     void OnMove(InputValue value)
     {
         if (!isAlive) { return; } 
@@ -179,40 +174,44 @@ public class PlayerMovement : MonoBehaviour
     {
         if (other.gameObject.tag == "Enemy")
         {
-           rbPlayer.velocity = hitFling;
-            --currentHealth;
+            if (isAlive)
+            {
+                rbPlayer.velocity = hitFling;
+            }
 
-            if (isAlive && currentHealth > 0)
-            {
-                playerSpriteRenderer.color = Color.red;
-                StartCoroutine(RestorePlayerSpriteColor());
-            }
-            else
-            {
-                Die();
-            }
+            FlashPlayerSpriteColor(Color.red);
+            Die();    
         }  
     }
 
-    void ProcessHit()
+    void ProcessWorldHit()
     {
         if (rbPlayer.IsTouchingLayers(LayerMask.GetMask("Hazards")))
         {
             rbPlayer.velocity = hitFling;
+            FlashPlayerSpriteColor(Color.red);
             Die();
         }
         
         if (rbPlayer.IsTouchingLayers(LayerMask.GetMask("Water")))
         {
+            FlashPlayerSpriteColor(Color.red);
             Die();
         }
+    }
+
+    void FlashPlayerSpriteColor(Color color)
+    {
+        playerSpriteRenderer.color = Color.red;
+        StartCoroutine(RestorePlayerSpriteColor());
     }
 
     void Die() 
     {
         isAlive = false;
         playerAnimator.SetTrigger("Dying");
-        playerSpriteRenderer.color = Color.red;
+        // playerSpriteRenderer.color = Color.red;
+        FindObjectOfType<GameSession>().ProcesPlayerDeath();
     }
 
     IEnumerator RestorePlayerSpriteColor()

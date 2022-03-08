@@ -14,11 +14,6 @@ public class EnemyMovement : MonoBehaviour
         rbEnemy = GetComponent<Rigidbody2D>();
     }
 
-    void Start()
-    {
-        
-    }
-
     void Update()
     {
         rbEnemy.velocity = new Vector2(enemyHorizontalSpeed, 0f);        
@@ -26,6 +21,7 @@ public class EnemyMovement : MonoBehaviour
 
     void OnTriggerExit2D(Collider2D other) 
     {
+        if (other.tag != "Platform") { return; }
         enemyHorizontalSpeed = -enemyHorizontalSpeed;
         FlipEnemySprite();
     }
